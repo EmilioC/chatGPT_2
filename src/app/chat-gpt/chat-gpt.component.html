@@ -1,1 +1,44 @@
-<p>chat-gpt works!</p>
+<div class="container">
+
+  <div class="row">
+    <div class="d-flex justify-content-end">
+      <!--             <textarea row="3" cols="15" class="form-control" [(ngModel)]="promptText"
+              placeholder="Apúnta bien ¡¡"></textarea>
+          <button class="btn btn-primary" (click)="checkResponse()">Send</button>
+-->
+      <input class="form-control me-2 " type="search" placeholder="Introduzca el texto..." aria-label="Search">
+
+      <!--             <input class="form-control me-2 " type="search"  [(ngModel)]="promptText"
+          (focus)="escuchar()" placeholder="Introduzca el texto..." aria-label="Search"> -->
+      <!--  <button type="button" class="btn btn-outline-secondary">Secondary</button> -->
+
+      <button class="btn btn-outline-secondary" type="submit">Pulsar</button>
+    </div>
+    <div class="col-md-12">
+      <br>
+      <div class="card">
+        <h4 class="card-header center neon_1">Carburos Metálicos Expoquimia</h4>
+        <div class="card-body">
+          <h6 class="card-title text-success center"></h6>
+          <div class="row">
+            <div class="col-md-12"></div>
+            <div class="col-md-12">
+              <div class="frame-box">
+                <div><img src="../../assets/ZNeT.gif" *ngIf="showSpinner" width="50px" height="50px">
+                  <div *ngFor="let item of chatConversation">
+                    <p class="card-text padding">
+                      <b>{{item.person}}:</b>
+                    </p>
+                  </div>
+
+                </div>
+              </div>
+              <br>
+
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
