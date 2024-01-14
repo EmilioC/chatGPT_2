@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { environment } from '../environments/environment';
-import { Configuration, OpenAIApi, } from 'openai';
+import { OpenAI } from 'openai';
 import { ChatWithBot, ResponseModel } from '../models/gpt-response';
 import { gptModels } from '../models/constants';
 
@@ -16,7 +16,7 @@ import { gptModels } from '../models/constants';
 export class ChatGPTComponent {
 
   chatConversation: ChatWithBot[] = [];
-  response!: ResponseModel;
+  response!: ResponseModel | undefined;
   responseTurbo!: any;
   gptModels = gptModels;
   promptText = '';
@@ -70,67 +70,105 @@ export class ChatGPTComponent {
   }
 
   async invokeGPT() {
-
-    if (this.promptText.length < 2)
+    // Verificar si el texto de entrada es demasiado corto
+    if (this.promptText.length < 2) {
       return;
+    }
+
     try {
+      // Resetear el estado de la respuesta
       this.response = undefined;
-      let configuration = new Configuration({ apiKey: environment.apiKey });
-      let openai = new OpenAIApi(configuration);
+      this.responseTurbo = undefined; // Asegúrate de definir esta propiedad en tu clase
+      this.showSpinner = true; // Mostrar un spinner o indicador de carga
 
-      /*       let requestData={
-              model: 'text-davinci-003',//'text-davinci-003',//"text-curie-001",
-              prompt: this.promptTextModificado + this.fraseAleatoria(frasesChiquito) + this.promptText,//this.generatePrompt(animal),
-              temperature: 0.95,
-              max_tokens: 100,
-              top_p: 1.0,
-              frequency_penalty: 0.0,
-              presence_penalty: 0.0,
-            };
+      // Crear una instancia de OpenAI con la clave API
+      let openai = new OpenAI({ apiKey: environment.apiKey });
 
-                  this.showSpinner = true;
-            let apiResponse =  await openai.createCompletion(requestData);
+      // Llamada a la API de OpenAI
+      let apiResponse = await openai.chat.completions.create({
+        model: 'gpt-3.5-turbo',
+        messages: [
+          { 'role': 'system', content: "eres un humorista" },
+          { 'role': 'user', content: this.promptText + this.promptTextModificado }
+        ],
+        temperature: 1
+      });
 
-            this.response = apiResponse.data as ResponseModel;
-            this.pushChatContent(this.response.choices[0].text.trim(),'ChiquiTronic','bot');
-       */
-      /* INICIO MODIFICADO PARA gpt-3.5-turbo */
-      this.showSpinner = true;
-      let apiResponse = await openai.createChatCompletion(
-        {
-          model: 'gpt-3.5-turbo',
-          messages: [
-            { 'role': 'system', content: "eres un humorista" },
-            { 'role': 'user', content: this.promptText + this.promptTextModificado + this.fraseAleatoria(frasesChiquito_1) }
-          ]
-          ,
-          temperature: 1
+      // Procesar la respuesta de la API
+      if (apiResponse && apiResponse.choices && apiResponse.choices.length > 0) {
+        this.responseTurbo = apiResponse.choices[0]; // Guardar la respuesta
+
+        // Verificar si la propiedad 'message' existe en la respuesta
+        if (this.responseTurbo && this.responseTurbo.message) {
+          // Agregar el contenido de la respuesta al chat y reproducirlo con voz
+          this.pushChatContent(this.responseTurbo.message.content, 'ChiquiTronic', 'bot');
+          this.hablar(this.responseTurbo.message.content);
         }
-      )
+      }
 
-      this.response = apiResponse.data as ResponseModel;
-      /* console.log(this.responseTurbo); */
-      this.responseTurbo = this.response.choices;
-
-      /*  console.log(this.responseTurbo[0].message.content); */
-      this.pushChatContent(this.responseTurbo[0].message.content, 'ChiquiTronic', 'bot');
-      /* FIN MODIFICADO PARA gpt-3.5-turbo */
-      this.hablar(this.responseTurbo[0].message.content);
-      this.showSpinner = false;
+      this.showSpinner = false; // Ocultar el spinner
 
     } catch (error: any) {
-      this.showSpinner = false;
-      // Consider adjusting the error handling logic for your use case
+      this.showSpinner = false; // Ocultar el spinner en caso de error
+
+      // Manejar los errores de la API
       if (error.response) {
         console.error(error.response.status, error.response.data);
         this.pushChatContent("Madre mía ¡¡ los cien caballos de bonanza se me han escapao ¡¡", 'ChiquiTronic', 'bot');
-
       } else {
         console.error(`Error with OpenAI API request: ${error.message}`);
-
       }
     }
   }
+
+
+
+
+  /*
+  CÓDIGO ANTERIOR
+  async invokeGPT() {
+
+      if (this.promptText.length < 2)
+        return;
+      try {
+        this.response = undefined;
+        let openai = new OpenAI({ apiKey: environment.apiKey });
+        this.showSpinner = true;
+        let apiResponse = await openai.chat.completions.create(
+          {
+            model: 'gpt-3.5-turbo',
+            messages: [
+              { 'role': 'system', content: "eres un humorista" },
+              { 'role': 'user', content: this.promptText + this.promptTextModificado }
+            ]
+            ,
+            temperature: 1
+          }
+        )
+
+        this.response = apiResponse.choices as ResponseModel;
+        // console.log(this.responseTurbo);
+        this.responseTurbo = this.response?.choices;
+
+        //console.log(this.responseTurbo[0].message.content);
+        this.pushChatContent(this.responseTurbo[0].message.content, 'ChiquiTronic', 'bot');
+        //FIN MODIFICADO PARA gpt-3.5-turbo
+        this.hablar(this.responseTurbo[0].message.content);
+        this.showSpinner = false;
+
+      } catch (error: any) {
+        this.showSpinner = false;
+
+        if (error.response) {
+          console.error(error.response.status, error.response.data);
+          this.pushChatContent("Madre mía ¡¡ los cien caballos de bonanza se me han escapao ¡¡", 'ChiquiTronic', 'bot');
+
+        } else {
+          console.error(`Error with OpenAI API request: ${error.message}`);
+
+        }
+      }
+    } */
 
   rabbitState: string = '';
 
